@@ -1,0 +1,10 @@
+rm(list = ls(all = TRUE))
+data.loc <- ("C:/Users/pazls/Desktop/Learning R/Rainfall/Data")
+setwd(data.loc)
+data.raw1 <- read.csv("Williamsburg1.csv", stringsAsFactors = TRUE)
+data.raw2 <- read.csv("Williamsburg2.csv", stringsAsFactors = TRUE)
+
+class(data.raw1$DATE)
+class(data.raw1$STATION)
+class(data.raw1$PRCP)
+class(data.raw1$TMAX)
