@@ -98,8 +98,6 @@ for(i in 1:length(dates)) { #
   }
 }
 
-B1hour <- newBhourly
-
 # using in 
 x <- seq(1:5)
 4 %in% x
@@ -107,6 +105,7 @@ x <- seq(1:5)
 
 B2hour <- data.frame(date_2hour = newBhourly$dates, sum_2hour = fill2)
 for(i in 1:length(newBhourly$dates)) {
+  print(i)
   start <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i])
   nexthour <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i + 1])
   if(!is.na(start$QPCP) | !is.na(nexthour$QPCP))  {
@@ -121,6 +120,30 @@ for(i in 1:length(newBhourly$dates)) {
     i = i + 2 
   }
 }
+
+B3hour <- data.frame(date_3hour = newBhourly$dates, sum_3hour = fill2)
+for(i in 1:length(newBhourly$dates)) {
+  print(i)
+  start <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i])
+  nexthour <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i + 1])
+  lasthour <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i + 2])
+  if(!is.na(start$QPCP) | !is.na(nexthour$QPCP) | !is.na(lasthour$QPCP))  {
+    start_max <- max(start$QPCP)
+    next_max <- max(nexthour$QPCP)
+    last_max <- max(lasthour$QPCP)
+    B3hour$sum_2hour[i] <- sum(start_max + next_max + last_max)
+  } else if(is.na(start$QPCP)) {
+    B3hour$sum_3hour[i] <- NA
+    i = i + 1
+  } else if(is.na(nexthour$QPCP)) {
+    B3hour$sum_3hour[i] <- NA
+    i = i + 2 
+  } else if(is.na(lasthour$QPCP)) {
+    B3hour$sum_3hour[i] <- NA
+    i = i + 3 
+  }
+}
+
 
 
 
