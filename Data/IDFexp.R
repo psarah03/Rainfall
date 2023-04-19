@@ -6,6 +6,7 @@ data.Baltimore_15min_Part2 <- read.csv("Baltimore_15min_Part2.csv", stringsAsFac
 data.Baltimore_hourly <- read.csv("Baltimore_hourly.csv", stringsAsFactors = TRUE)
 library(lubridate)
 library(dplyr)
+library("ggplot2")
 
 ## HOW GOOD IS THE DATA? ############################################################
 
@@ -121,6 +122,11 @@ for(i in 1:length(newBhourly$dates)) {
   }
 }
 
+write.csv(newBhourly, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/newBhourly.csv", row.names=TRUE)
+write.csv(B2hour, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/B2hour.csv", row.names=TRUE)
+
+# UNTESTED!!
+
 B3hour <- data.frame(date_3hour = newBhourly$dates, sum_3hour = fill2)
 for(i in 1:length(newBhourly$dates)) {
   print(i)
@@ -145,6 +151,40 @@ for(i in 1:length(newBhourly$dates)) {
 }
 
 
+years <- unique(format(as.Date(newBhourly$dates), "%Y"))
+fill4 <- rep(NA, length(years))
+hour1ddf <- data.frame(year = years, annualprcp = fill4, m = fill4, probability = fill4, return_pd = fill4)
+hour2ddf <- data.frame(year = years, annualprcp = fill4, m = fill4, probability = fill4, return_pd = fill4)
 
+for(i in 1:length(years)) { # for newBhourly
+  currentyear <- unique(format(as.Date(newBhourly$dates), "%Y"))
+  year_data <- subset(newBhourly, currentyear == years[i])
+  hour1ddf$annualprcp[i] <- sum(year_data$QPCP, na.rm = TRUE)
+}
 
+for(i in 1:length(years)) { # for B2hour
+  currentyear <- unique(format(as.Date(B2hour$date_2hour), "%Y"))
+  year_data <- subset(B2hour, currentyear == years[i])
+  hour2ddf$annualprcp[i] <- sum(year_data$sum_2hour, na.rm = TRUE)
+}
+
+# assign rank to each annualprcp value
+m <- c(14, 1, 2, 17)
+print(rank(m))
+
+hour1ddf$m <- rank(hour1ddf$annualprcp)
+hour1ddf$probability <- hour1ddf$m / 67
+hour1ddf$return_pd <- 1 / hour1ddf$probability
+
+png(file="B1hourddf.png")
+ggplot(hour1ddf, aes(x=return_pd, y=annualprcp)) + geom_point() + labs(title = "Depth-Duration-Frequency Curve", x = "Return period", y = "Depth(mm)") # + scale_x_continuous(trans='log10')
+dev.off()
+
+hour2ddf$m <- rank(hour2ddf$annualprcp)
+hour2ddf$probability <- hour2ddf$m / 67
+hour2ddf$return_pd <- 1 / hour2ddf$probability
+
+png(file="B2hourddf.png")
+ggplot(hour2ddf, aes(x=return_pd, y=annualprcp)) + geom_point() + labs(title = "Depth-Duration-Frequency Curve", x = "Return period", y = "Depth(mm)")
+dev.off()
 
