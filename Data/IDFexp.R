@@ -5,6 +5,11 @@ data.Baltimore_15min_Part1 <- read.csv("Baltimore_15min_Part1.csv", stringsAsFac
 data.Baltimore_15min_Part2 <- read.csv("Baltimore_15min_Part2.csv", stringsAsFactors = TRUE)
 data.Baltimore_hourly <- read.csv("Baltimore_hourly.csv", stringsAsFactors = TRUE)
 data.Baltimore_daily <- read.csv("Baltimore_daily.csv", stringsAsFactors = TRUE)
+newBhourly <- read.csv("newBhourly.csv", stringsAsFactors = TRUE)
+B2hour <- read.csv("B2hour.csv", stringsAsFactors = TRUE)
+B1day <- read.csv("B1day.csv", stringsAsFactors = TRUE)
+B2day <- read.csv("B2day.csv", stringsAsFactors = TRUE)
+
 library(lubridate)
 library(dplyr)
 library("ggplot2")
@@ -135,7 +140,7 @@ for(i in 1:(length(Laurel$PRCP))) {
   }
 } 
 coverage$prcp_coverage[6] <- 100 * (length(Laurel$DATE) - Bdailymissing) / (Bdailyduration)
-# Beltsville is a little closer
+# Aberdeen is a little closer
 
 ## HOURLY INTERVALS ############################################################################
 
@@ -164,13 +169,14 @@ for(i in 1:length(dates)) { #
   }
 }
 
+# write.csv(newBhourly, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/newBhourly.csv", row.names=TRUE)
+
 # using in 
 x <- seq(1:5)
 4 %in% x
 6 %in% x
 
 # 2 hour interval
-
 B2hour <- data.frame(date_2hour = newBhourly$dates, sum_2hour = fill2)
 for(i in 1:length(newBhourly$dates)) {
   print(i)
@@ -189,14 +195,11 @@ for(i in 1:length(newBhourly$dates)) {
   }
 }
 
-# saving my data
+# write.csv(B2hour, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/B2hour.csv", row.names=TRUE)
 
-write.csv(newBhourly, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/newBhourly.csv", row.names=TRUE)
-write.csv(B2hour, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/B2hour.csv", row.names=TRUE)
-
-# 3 hour interval
+# 3 hour interval --> skip
 B3hour <- data.frame(date_3hour = newBhourly$dates, sum_3hour = fill2)
-for(i in 1:50) { # length(newBhourly$dates)
+for(i in 1:length(newBhourly$dates)) { # length(newBhourly$dates)
   print(i)
   start <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i])
   nexthour <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i + 1])
@@ -218,11 +221,13 @@ for(i in 1:50) { # length(newBhourly$dates)
   }
 }
 
-print(head(B3hour, 50))
+# write.csv(B3hour, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/B3hour.csv", row.names=TRUE)
+
+# print(head(B3hour, 50))
 
 # 4 hour interval
 B4hour <- data.frame(date_4hour = newBhourly$dates, sum_4hour = fill2)
-for(i in 1:50) { # length(newBhourly$dates)
+for(i in 1:length(newBhourly$date)) { # length(newBhourly$dates)
   print(i)
   start <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i])
   nexthour <- subset(newBhourly, newBhourly$dates == newBhourly$dates[i + 1])
@@ -246,17 +251,73 @@ for(i in 1:50) { # length(newBhourly$dates)
   } else if (is.na(lasthour$QPCP)) {
     B4hour$sum_4hour[i] <- NA
     i = i + 4 
-  }
+  } 
 }
 
-print(head(B4hour, 50))
+# print(head(B4hour, 50))
+
+# write.csv(B4hour, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/B4hour.csv", row.names=TRUE)
 
 ## DAILY INTERVALS ##################################################################################
 
-# need to pick the station with the most coverage: 
+# need to pick the station with the most coverage: Aberdeen # 22330
+Aberdeen$DATE <- as.Date(Aberdeen$DATE, "%m/%d/%Y")
+print(length(Aberdeen$DATE)) # 22330
+print(head(Aberdeen$DATE, 1)) # 1940-01-01
+print(tail(Aberdeen$DATE, 1)) # 2010-01-01
+Aberdeen <- Aberdeen[order(Aberdeen$DATE),]
 
-fill5 <- rep(NA, length(unique(Bdaily$Date)))
-B1day <- data.frame(date_1day = fill5, sum_1day = fill5)
+days <- seq(as.Date("1940/1/1"), as.Date ("2010/1/1"), "days")
+fill5 <- rep(0.00, length(days))
+B1day <- data.frame(date_1day = days, sum_1day = fill5)
+availabledays <- unique(B1day$date_1day)
+
+print(length(subset(Aberdeen$PRCP, is.na(Aberdeen$PRCP)))) # 1877
+
+# 1 day
+
+for(i in 1:length(availabledays)) { # length(availabledays)
+  if(B1day$date_1day[i] %in% availabledays) {
+    date <- B1day$date_1day[i] # changes the date
+    print(date)
+    Aberdeendaily_data <- subset(Aberdeen, Aberdeen$DATE == date) # looks at the data at that specific date
+    maximum_list <- subset(Aberdeendaily_data$PRCP, !is.na(Aberdeendaily_data$PRCP)) # looks at maximum, excluding NA values 
+    if(length(maximum_list) == 0) {
+      B1day$sum_1day[i] <- NA
+    } else {
+      B1day$sum_1day[i] <- max(maximum_list)
+    }
+    
+  }
+}
+
+print(length(subset(B1day$sum_1day, is.na(B1day$sum_1day))))
+
+write.csv(B1day, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/B1day.csv", row.names=TRUE)
+
+# 2 days
+
+B2day <- data.frame(date_2day = B1day$date_1day, sum_2day = fill5)
+for(i in 1:length(availabledays)) {
+  print(i)
+  start <- subset(B1day, B1day$date_1day == B1day$date_1day[i])
+  nextday <- subset(B1day, B1day$date_1day == B1day$date_1day[i + 1])
+  if(!is.na(start$sum_1day) | !is.na(nextday$sum_1day))  {
+    start_max <- max(start$sum_1day)
+    next_max <- max(nextday$sum_1day)
+    B2day$sum_2day[i] <- sum(start_max + next_max)
+  } else if(is.na(start$sum_1day)) {
+    print("NA value")
+    B2day$sum_2day[i] <- NA
+    i = i + 1
+  } else if(is.na(nextday$sum_1day)) {
+    print("NA value")
+    B2day$sum_2day[i] <- NA
+    i = i + 2 
+  }
+}
+
+write.csv(B2day, "C:/Users/pazls/Desktop/Learning R/Rainfall/Data/B2day.csv", row.names=TRUE)
 
 ## DDF curves #######################################################################################
 
@@ -265,23 +326,52 @@ fill4 <- rep(NA, length(years))
 hour1ddf <- data.frame(year = years, annualprcp = fill4, m = fill4, probability = fill4, return_pd = fill4)
 hour2ddf <- data.frame(year = years, annualprcp = fill4, m = fill4, probability = fill4, return_pd = fill4)
 
-for(i in 1:length(years)) { # for newBhourly
-  currentyear <- unique(format(as.Date(newBhourly$dates), "%Y"))
-  year_data <- subset(newBhourly, currentyear == years[i])
+i = 2
+print(format(as.Date(newBhourly$dates[i]), "%Y"))
+
+newBhourly$dates <- format(as.Date(newBhourly$dates), "%Y")
+
+# for newBhourly
+for(i in 1:length(years)) { 
+  year_data <- subset(newBhourly, newBhourly$dates == years[i])
   hour1ddf$annualprcp[i] <- sum(year_data$QPCP, na.rm = TRUE)
 }
 
+# fix 2 hours
+years <- unique(format(as.Date(B2hour$date_2hour), "%Y"))
+B2hour$date_2hour <- format(as.Date(B2hour$date_2hour), "%Y")
+hour2ddf$year <- years
 for(i in 1:length(years)) { # for B2hour
-  currentyear <- unique(format(as.Date(B2hour$date_2hour), "%Y"))
-  year_data <- subset(B2hour, currentyear == years[i])
+  year_data <- subset(B2hour, B2hour$date_2hour == years[i])
   hour2ddf$annualprcp[i] <- sum(year_data$sum_2hour, na.rm = TRUE)
 }
 
+years <- unique(format(as.Date(B1day$date_1day), "%Y")) # 71
+fill5 <- rep(NA, length(years))
+day1ddf <- data.frame(year = years, annualprcp = fill5, m = fill5, probability = fill5, return_pd = fill5)
+for(i in 1:length(years)) { # for B1day
+  currentyear <- unique(format(as.Date(B1day$date_1day), "%Y"))
+  year_data <- subset(B1day, currentyear == years[i])
+  day1ddf$annualprcp[i] <- sum(year_data$sum_1day, na.rm = TRUE)
+}
+
+years <- unique(format(as.Date(B2day$date_2day), "%Y")) # 71
+fill5 <- rep(NA, length(years))
+day2ddf <- data.frame(year = years, annualprcp = fill5, m = fill5, probability = fill5, return_pd = fill5)
+for(i in 1:length(years)) { # for B2day
+  currentyear <- unique(format(as.Date(B2day$date_2day), "%Y"))
+  year_data <- subset(B2day, currentyear == years[i])
+  day2ddf$annualprcp[i] <- sum(year_data$sum_2day, na.rm = TRUE)
+}
+
+## PROBABILITY #########################################################################################
+
 # assign rank to each annualprcp value
 m <- c(14, 1, 2, 17)
-print(rank(m))
+print(rank(-m))
 
-hour1ddf$m <- rank(hour1ddf$annualprcp)
+# 1 hour
+hour1ddf$m <- rank(-hour1ddf$annualprcp)
 hour1ddf$probability <- hour1ddf$m / 67
 hour1ddf$return_pd <- 1 / hour1ddf$probability
 
@@ -289,7 +379,8 @@ png(file="B1hourddf.png")
 ggplot(hour1ddf, aes(x=return_pd, y=annualprcp)) + geom_point() + labs(title = "Depth-Duration-Frequency Curve", x = "Return period", y = "Depth(mm)") # + scale_x_continuous(trans='log10')
 dev.off()
 
-hour2ddf$m <- rank(hour2ddf$annualprcp)
+# 2 hour
+hour2ddf$m <- rank(-hour2ddf$annualprcp)
 hour2ddf$probability <- hour2ddf$m / 67
 hour2ddf$return_pd <- 1 / hour2ddf$probability
 
@@ -297,7 +388,52 @@ png(file="B2hourddf.png")
 ggplot(hour2ddf, aes(x=return_pd, y=annualprcp)) + geom_point() + labs(title = "Depth-Duration-Frequency Curve", x = "Return period", y = "Depth(mm)")
 dev.off()
 
-depth1hr <- subset(hour1ddf, hour1ddf$return_pd == 20)
+# 1 day
+day1ddf$m <- rank(-day1ddf$annualprcp)
+day1ddf$probability <- day1ddf$m / 72
+day1ddf$return_pd <- 1 / day1ddf$probability
+
+png(file="B1dayddf.png")
+# initial <- ggplot(day1ddf, aes(x=return_pd, y=annualprcp)) + geom_point() + scale_x_continuous(trans='log10') + labs(title = "Depth-Duration-Frequency Curve", x = "Return period (years)", y = "Depth (in)")
+# lm_eqn <- function(df){
+#  m <- lm(df$annualprcp ~ df$return_pd, df);
+#  eq <- substitute(italic(df$annualprcp) == a + b %.% italic(df$return_pd)*","~~italic(r)^2~"="~r2, 
+#                   list(a = format(unname(coef(m)[1]), digits = 2),
+#                        b = format(unname(coef(m)[2]), digits = 2),
+#                        r2 = format(summary(m)$r.squared, digits = 3)))
+#  as.character(as.expression(eq));
+#}
+# equation <- lm_eqn(day1ddf)
+ggplot(day1ddf, aes(x=return_pd, y=annualprcp)) + geom_point() + ylim(0, 50) + labs(title = "Depth-Duration-Frequency Curve", x = "Return period (years)", y = "Depth (in)")
+# + annotate("text", x=10, y=50, label= equation)
+# + geom_smooth(method=lm, se=FALSE)
+#  + scale_x_continuous(trans='log10')
+dev.off()
+
+## experimentation
+a <- 5
+a <- as.character(a)
+l <- paste("j", a, sep = "")
+
+day2ddf$m <- rank(-day2ddf$annualprcp)
+day2ddf$probability <- day2ddf$m / 72
+day2ddf$return_pd <- 1 / day2ddf$probability
+
+png(file="B2dayddf.png")
+initial <- ggplot(day2ddf, aes(x=return_pd, y=annualprcp)) + geom_point() + scale_x_continuous(trans='log10') + labs(title = "Depth-Duration-Frequency Curve", x = "Return period (years)", y = "Depth (in)")
+lm_eqn <- function(df){
+  m <- lm(df$annualprcp ~ df$return_pd, df);
+  eq <- substitute(y == a + b * x,
+                   list(a = format(unname(coef(m)[1]), digits = 2),
+                        b = format(unname(coef(m)[2]), digits = 2),
+                        r2 = format(summary(m)$r.squared, digits = 3)))
+  return(eq)
+}
+
+#  (r)^2~"="~r2, 
+equation <- lm_eqn(day2ddf)
+ggplot(day2ddf, aes(x=return_pd, y=annualprcp)) + geom_point() + scale_x_continuous(trans='log10') + geom_smooth(method=lm, se=FALSE) + annotate("text", x=10, y=100, label= paste(equation, sep = " "))
+dev.off()
 
 # hypothetically, the closest to the 20 year storm is 
 
